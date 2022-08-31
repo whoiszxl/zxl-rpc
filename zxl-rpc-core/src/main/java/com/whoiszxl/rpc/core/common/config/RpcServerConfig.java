@@ -5,13 +5,33 @@ package com.whoiszxl.rpc.core.common.config;
  */
 public class RpcServerConfig {
 
-    private Integer port;
+    private Integer serverPort;
 
-    public Integer getPort() {
-        return port;
+    private String registerAddr;
+
+    private String applicationName;
+
+    public Integer getServerPort() {
+        return serverPort;
     }
 
-    public void setPort(Integer port) {
-        this.port = port;
+    public void setServerPort(Integer serverPort) {
+        this.serverPort = serverPort;
+    }
+
+    public String getRegisterAddr() {
+        return registerAddr;
+    }
+
+    public void setRegisterAddr(String registerAddr) {
+        this.registerAddr = registerAddr;
+    }
+
+    public String getApplicationName() {
+        return applicationName;
+    }
+
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
     }
 }

@@ -28,7 +28,7 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
 
         //从自定义协议中获取到需要调用的服务名与方法，从缓存中通过服务名拿到实例对象
         RpcInvocation rpcInvocation = JSON.parseObject(json, RpcInvocation.class);
-        Object aimObject = RpcServerCache.classCache.get(rpcInvocation.getTargetServiceName());
+        Object aimObject = RpcServerCache.PROVIDER_CLASS_MAP.get(rpcInvocation.getTargetServiceName());
         Method[] methods = aimObject.getClass().getDeclaredMethods();
 
         //遍历方法，找到请求中需要调用的方法，如果有返回值，将response封装回协议中再写回

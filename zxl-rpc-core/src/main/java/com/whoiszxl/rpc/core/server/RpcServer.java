@@ -1,9 +1,14 @@
 package com.whoiszxl.rpc.core.server;
 
 import com.whoiszxl.rpc.core.common.cache.RpcServerCache;
+import com.whoiszxl.rpc.core.common.config.PropertiesBootstrap;
 import com.whoiszxl.rpc.core.common.config.RpcServerConfig;
 import com.whoiszxl.rpc.core.common.pack.RpcDecoder;
 import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
+import com.whoiszxl.rpc.core.common.utils.IpUtils;
+import com.whoiszxl.rpc.core.registy.RegURL;
+import com.whoiszxl.rpc.core.registy.RegistryService;
+import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
 import com.whoiszxl.rpc.core.service.impl.LoginServiceImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -12,6 +17,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * rpc netty server
@@ -23,6 +30,8 @@ public class RpcServer {
     private static EventLoopGroup workerGroup = null;
 
     private RpcServerConfig rpcServerConfig;
+
+    private RegistryService registryService;
 
 
     /**
@@ -51,7 +60,25 @@ public class RpcServer {
             }
         });
 
-        serverBootstrap.bind(rpcServerConfig.getPort()).sync();
+        this.batchExportUrl();
+
+        serverBootstrap.bind(rpcServerConfig.getServerPort()).sync();
+    }
+
+    public void batchExportUrl() {
+        Thread task = new Thread(() -> {
+            try {
+                TimeUnit.SECONDS.sleep(3);
+            }catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            for (RegURL regURL : RpcServerCache.PROVIDER_URL_SET) {
+                registryService.register(regURL);
+            }
+        });
+
+        task.start();
     }
 
 
@@ -72,21 +99,35 @@ public class RpcServer {
             throw new RuntimeException("注册的服务只能实现一个接口");
         }
 
+        //创建注册服务
+        if(registryService == null) {
+            registryService = new ZookeeperRegister(rpcServerConfig.getRegisterAddr());
+        }
+
         Class<?> myInterface = interfaces[0];
 
-        RpcServerCache.classCache.put(myInterface.getName(), serviceBean);
+        RpcServerCache.PROVIDER_CLASS_MAP.put(myInterface.getName(), serviceBean);
+        RegURL regURL = new RegURL();
+        regURL.setServiceName(myInterface.getName());
+        regURL.setApplicationName(rpcServerConfig.getApplicationName());
+        regURL.addParameter("host", IpUtils.getIpAddress());
+        regURL.addParameter("port", String.valueOf(rpcServerConfig.getServerPort()));
+
+        RpcServerCache.PROVIDER_URL_SET.add(regURL);
 
     }
 
     public static void main(String[] args) throws InterruptedException {
         RpcServer rpcServer = new RpcServer();
-        RpcServerConfig rpcServerConfig = new RpcServerConfig();
-        rpcServerConfig.setPort(10000);
-        rpcServer.setRpcServerConfig(rpcServerConfig);
+        rpcServer.initServerConfig();
         rpcServer.registerService(new LoginServiceImpl());
         rpcServer.startApp();
     }
 
+    private void initServerConfig() {
+        RpcServerConfig rpcServerConfig = PropertiesBootstrap.loadServerConfigFromLocal();
+        this.setRpcServerConfig(rpcServerConfig);
+    }
 
 
     public RpcServerConfig getRpcServerConfig() {

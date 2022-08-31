@@ -5,23 +5,33 @@ package com.whoiszxl.rpc.core.common.config;
  */
 public class RpcClientConfig {
 
-    private Integer port;
+    private String applicationName;
 
-    private String serverHost;
+    private String registerAddr;
 
-    public Integer getPort() {
-        return port;
+    private String proxyType;
+
+    public String getApplicationName() {
+        return applicationName;
     }
 
-    public void setPort(Integer port) {
-        this.port = port;
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
     }
 
-    public String getServerHost() {
-        return serverHost;
+    public String getRegisterAddr() {
+        return registerAddr;
     }
 
-    public void setServerHost(String serverHost) {
-        this.serverHost = serverHost;
+    public void setRegisterAddr(String registerAddr) {
+        this.registerAddr = registerAddr;
+    }
+
+    public String getProxyType() {
+        return proxyType;
+    }
+
+    public void setProxyType(String proxyType) {
+        this.proxyType = proxyType;
     }
 }
