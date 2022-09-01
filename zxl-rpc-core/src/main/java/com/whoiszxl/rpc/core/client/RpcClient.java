@@ -14,6 +14,8 @@ import com.whoiszxl.rpc.core.proxy.jdk.JDKProxyFactory;
 import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.registy.zk.AbstractRegister;
 import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
+import com.whoiszxl.rpc.core.router.RandomRouterImpl;
+import com.whoiszxl.rpc.core.router.RotateRouterImpl;
 import com.whoiszxl.rpc.service.LoginService;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -26,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 public class RpcClient {
 
@@ -46,7 +49,7 @@ public class RpcClient {
      * 启动rpc客户端
      * @return
      */
-    public RpcReference startClientApp() throws InterruptedException {
+    public RpcReference initClient() throws InterruptedException {
         NioEventLoopGroup clientGroup = new NioEventLoopGroup();
         bootstrap.group(clientGroup);
         bootstrap.channel(NioSocketChannel.class);
@@ -83,22 +86,31 @@ public class RpcClient {
         url.setApplicationName(rpcClientConfig.getApplicationName());
         url.setServiceName(serviceBean.getName());
         url.addParameter("host", IpUtils.getIpAddress());
+
+        Map<String, String> result = abstractRegister.getServiceWeightMap(serviceBean.getName());
+        RpcClientCache.URL_MAP.put(serviceBean.getName(), result);
+
         abstractRegister.subscribe(url);
     }
 
 
     public void doConnectServer() {
-        for (String providerServiceName : RpcClientCache.SUBSCRIBE_SERVICE_LIST) {
-            List<String> providerIps = abstractRegister.getProviderIps(providerServiceName);
+        //遍历所有的service服务
+        for (RegURL providerUrl : RpcClientCache.SUBSCRIBE_SERVICE_LIST) {
+            //从zk中拿到所有的服务提供者的ip:port
+            List<String> providerIps = abstractRegister.getProviderIps(providerUrl.getServiceName());
+            //遍历所有的ip:port，创建连接，并保存到CONNECT_MAP连接缓存中去
             for (String providerIp : providerIps) {
                 try {
-                    ConnectionHandler.connect(providerServiceName, providerIp);
+                    ConnectionHandler.connect(providerUrl.getServiceName(), providerIp);
                 } catch (InterruptedException e) {
                     logger.error("[doConnectServer] connect fail ", e);
                 }
             }
+            //订阅变动
             RegURL url = new RegURL();
-            url.setServiceName(providerServiceName);
+            url.addParameter("servicePath", providerUrl.getServiceName() + "/provider");
+            url.addParameter("providerIps", JSON.toJSONString(providerIps));
             abstractRegister.doAfterSubscribe(url);
         }
     }
@@ -110,7 +122,7 @@ public class RpcClient {
     }
 
 
-    class AsyncSendJob implements Runnable {
+    static class AsyncSendJob implements Runnable {
 
         @Override
         public void run() {
@@ -134,8 +146,10 @@ public class RpcClient {
 
     public static void main(String[] args) throws Throwable {
         RpcClient rpcClient = new RpcClient();
-        RpcReference rpcReference = rpcClient.startClientApp();
+        RpcReference rpcReference = rpcClient.initClient();
 
+        //初始化客户端配置
+        rpcClient.initClientConfig();
 
         //通过代理的方式获取到服务,在代理中将请求封装到队列里，然后将结果重新返回到队列中，通过超时的判断将结果返回
         LoginService loginService = rpcReference.get(LoginService.class);
@@ -151,6 +165,15 @@ public class RpcClient {
         }
 
 
+    }
+
+    private void initClientConfig() {
+        String routerStrategy = rpcClientConfig.getRouterStrategy();
+        if("rotate".equals(routerStrategy)) {
+            RpcClientCache.IROUTER = new RotateRouterImpl();
+        }else if("random".equals(routerStrategy)) {
+            RpcClientCache.IROUTER = new RandomRouterImpl();
+        }
     }
 
 

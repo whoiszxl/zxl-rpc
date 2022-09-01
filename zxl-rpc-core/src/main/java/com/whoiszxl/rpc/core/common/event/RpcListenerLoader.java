@@ -1,5 +1,6 @@
 package com.whoiszxl.rpc.core.common.event;
 
+import com.whoiszxl.rpc.core.common.event.listener.ProviderNodeDataChangeListener;
 import com.whoiszxl.rpc.core.common.event.listener.ServiceUpdateListener;
 
 import java.lang.reflect.ParameterizedType;
@@ -21,6 +22,7 @@ public class RpcListenerLoader {
 
     public void init() {
         registerListener(new ServiceUpdateListener());
+        registerListener(new ProviderNodeDataChangeListener());
     }
 
     /**

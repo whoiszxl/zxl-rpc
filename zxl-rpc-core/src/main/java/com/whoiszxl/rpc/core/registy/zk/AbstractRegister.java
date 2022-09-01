@@ -6,6 +6,7 @@ import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.registy.RegistryService;
 
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractRegister implements RegistryService {
 
@@ -21,12 +22,12 @@ public abstract class AbstractRegister implements RegistryService {
 
     @Override
     public void subscribe(RegURL url) {
-        RpcClientCache.SUBSCRIBE_SERVICE_LIST.add(url.getServiceName());
+        RpcClientCache.SUBSCRIBE_SERVICE_LIST.add(url);
     }
 
     @Override
     public void doUnSubscribe(RegURL url) {
-        RpcClientCache.SUBSCRIBE_SERVICE_LIST.remove(url.getServiceName());
+        RpcClientCache.SUBSCRIBE_SERVICE_LIST.remove(url);
     }
 
 
@@ -35,4 +36,6 @@ public abstract class AbstractRegister implements RegistryService {
     public abstract void doBeforeSubscribe(RegURL url);
 
     public abstract List<String> getProviderIps(String serviceName);
+
+    public abstract Map<String, String> getServiceWeightMap(String name);
 }

@@ -1,7 +1,10 @@
 package com.whoiszxl.rpc.core.common.cache;
 
+import com.whoiszxl.rpc.core.common.event.data.ChannelFuturePollingRef;
 import com.whoiszxl.rpc.core.common.event.data.ChannelFutureWrapper;
 import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
+import com.whoiszxl.rpc.core.registy.RegURL;
+import com.whoiszxl.rpc.core.router.IRouter;
 
 import java.net.URL;
 import java.util.*;
@@ -27,7 +30,7 @@ public class RpcClientCache {
     /**
      * 订阅服务列表
      */
-    public static List<String> SUBSCRIBE_SERVICE_LIST = new ArrayList<>();
+    public static List<RegURL> SUBSCRIBE_SERVICE_LIST = new ArrayList<>();
 
 
     /**
@@ -36,8 +39,17 @@ public class RpcClientCache {
     public static Map<String, List<ChannelFutureWrapper>> CONNECT_MAP = new ConcurrentHashMap<>();
 
 
-    public static Map<String, List<URL>> URL_MAP = new ConcurrentHashMap<>();
+    public static Map<String, Map<String, String>> URL_MAP = new ConcurrentHashMap<>();
 
 
     public static Set<String> SERVER_ADDRESS = new HashSet<>();
+
+
+
+    public static Map<String, ChannelFutureWrapper[]> SERVICE_ROUTER_MAP = new ConcurrentHashMap<>();
+
+    public static ChannelFuturePollingRef CHANNEL_FUTURE_POLLING_REF = new ChannelFuturePollingRef();
+
+
+    public static IRouter IROUTER;
 }

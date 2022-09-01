@@ -30,7 +30,7 @@ public class RegURL {
     public static String buildProviderUrlStr(RegURL url) {
         String host = url.getParameters().get("host");
         String port = url.getParameters().get("port");
-        return url.getApplicationName() + ";" + url.getServiceName() + ";" + host + ":" + port + ";" + System.currentTimeMillis();
+        return url.getApplicationName() + ";" + url.getServiceName() + ";" + host + ":" + port + ";" + System.currentTimeMillis() + ";100";
     }
 
     public static String buildConsumerUrlStr(RegURL url) {

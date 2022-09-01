@@ -5,6 +5,7 @@ import com.whoiszxl.rpc.service.LoginService;
 public class LoginServiceImpl implements LoginService {
     @Override
     public String login(String username, String password) {
+        System.out.println(username + "登录成功");
         return username + "登录成功";
     }
 }

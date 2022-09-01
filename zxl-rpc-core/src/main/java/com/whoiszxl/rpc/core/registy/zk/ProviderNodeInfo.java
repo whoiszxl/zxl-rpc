@@ -6,6 +6,10 @@ public class ProviderNodeInfo {
 
     private String address;
 
+    private Integer weight;
+
+    private String registryTime;
+
     public String getServiceName() {
         return serviceName;
     }
@@ -22,11 +26,29 @@ public class ProviderNodeInfo {
         this.address = address;
     }
 
+    public Integer getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Integer weight) {
+        this.weight = weight;
+    }
+
+    public String getRegistryTime() {
+        return registryTime;
+    }
+
+    public void setRegistryTime(String registryTime) {
+        this.registryTime = registryTime;
+    }
+
     @Override
     public String toString() {
         return "ProviderNodeInfo{" +
                 "serviceName='" + serviceName + '\'' +
                 ", address='" + address + '\'' +
+                ", weight=" + weight +
+                ", registryTime='" + registryTime + '\'' +
                 '}';
     }
 }

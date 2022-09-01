@@ -3,11 +3,11 @@ package com.whoiszxl.rpc.core.server;
 import com.whoiszxl.rpc.core.common.cache.RpcServerCache;
 import com.whoiszxl.rpc.core.common.config.PropertiesBootstrap;
 import com.whoiszxl.rpc.core.common.config.RpcServerConfig;
+import com.whoiszxl.rpc.core.common.event.RpcListenerLoader;
 import com.whoiszxl.rpc.core.common.pack.RpcDecoder;
 import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
 import com.whoiszxl.rpc.core.common.utils.IpUtils;
 import com.whoiszxl.rpc.core.registy.RegURL;
-import com.whoiszxl.rpc.core.registy.RegistryService;
 import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
 import com.whoiszxl.rpc.core.service.impl.LoginServiceImpl;
 import io.netty.bootstrap.ServerBootstrap;
@@ -31,7 +31,8 @@ public class RpcServer {
 
     private RpcServerConfig rpcServerConfig;
 
-    private RegistryService registryService;
+    private static RpcListenerLoader rpcListenerLoader;
+
 
 
     /**
@@ -63,6 +64,8 @@ public class RpcServer {
         this.batchExportUrl();
 
         serverBootstrap.bind(rpcServerConfig.getServerPort()).sync();
+
+        System.out.println("服务启动成功: " + IpUtils.getIpAddress() + ":" + rpcServerConfig.getServerPort());
     }
 
     public void batchExportUrl() {
@@ -74,7 +77,7 @@ public class RpcServer {
             }
 
             for (RegURL regURL : RpcServerCache.PROVIDER_URL_SET) {
-                registryService.register(regURL);
+                RpcServerCache.REGISTRY_SERVICE.register(regURL);
             }
         });
 
@@ -100,8 +103,8 @@ public class RpcServer {
         }
 
         //创建注册服务
-        if(registryService == null) {
-            registryService = new ZookeeperRegister(rpcServerConfig.getRegisterAddr());
+        if(RpcServerCache.REGISTRY_SERVICE == null) {
+            RpcServerCache.REGISTRY_SERVICE = new ZookeeperRegister(rpcServerConfig.getRegisterAddr());
         }
 
         Class<?> myInterface = interfaces[0];
@@ -120,6 +123,10 @@ public class RpcServer {
     public static void main(String[] args) throws InterruptedException {
         RpcServer rpcServer = new RpcServer();
         rpcServer.initServerConfig();
+
+        rpcListenerLoader = new RpcListenerLoader();
+        rpcListenerLoader.init();
+
         rpcServer.registerService(new LoginServiceImpl());
         rpcServer.startApp();
     }
