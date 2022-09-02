@@ -12,6 +12,10 @@ public class PropertiesBootstrap {
     public static final String PROXY_TYPE = "zxl-rpc.proxyType";
     public static final String ROUTER_STRATEGY = "zxl-rpc.routerStrategy";
 
+    public static final String SERVER_SERIALIZE_TYPE = "zxl-rpc.serverSerialize";
+    public static final String CLIENT_SERIALIZE_TYPE = "zxl-rpc.clientSerialize";
+
+
     public static RpcServerConfig loadServerConfigFromLocal() {
         try {
             PropertiesLoader.loadConfiguration();
@@ -22,6 +26,7 @@ public class PropertiesBootstrap {
         serverConfig.setServerPort(PropertiesLoader.getPropertiesInteger(SERVER_PORT));
         serverConfig.setApplicationName(PropertiesLoader.getPropertiesStr(APPLICATION_NAME));
         serverConfig.setRegisterAddr(PropertiesLoader.getPropertiesStr(REGISTER_ADDRESS));
+        serverConfig.setServerSerialize(PropertiesLoader.getPropertiesStr(SERVER_SERIALIZE_TYPE));
         return serverConfig;
     }
 
@@ -36,6 +41,7 @@ public class PropertiesBootstrap {
         clientConfig.setRegisterAddr(PropertiesLoader.getPropertiesStr(REGISTER_ADDRESS));
         clientConfig.setProxyType(PropertiesLoader.getPropertiesStr(PROXY_TYPE));
         clientConfig.setRouterStrategy(PropertiesLoader.getPropertiesStr(ROUTER_STRATEGY));
+        clientConfig.setClientSerialize(PropertiesLoader.getPropertiesStr(CLIENT_SERIALIZE_TYPE));
         return clientConfig;
     }
 

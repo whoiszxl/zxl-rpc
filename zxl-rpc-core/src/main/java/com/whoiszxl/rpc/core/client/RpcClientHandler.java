@@ -21,11 +21,10 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        //获取到rpc调用类
+        //获取到rpc调用类,通过自定义序列化协议反序列化流数据，得到返回参数
         RpcProtocol rpcProtocol = (RpcProtocol) msg;
         byte[] content = rpcProtocol.getContent();
-        String json = new String(content, 0, content.length);
-        RpcInvocation rpcInvocation = JSON.parseObject(json, RpcInvocation.class);
+        RpcInvocation rpcInvocation = RpcClientCache.CLIENT_SERIALIZE_FACTORY.deserialize(content, RpcInvocation.class);
 
         //如果uuid与发送时的不一致，表明response是不合法的
         if(!RpcClientCache.RESPONSE_CACHES.containsKey(rpcInvocation.getUuid())) {

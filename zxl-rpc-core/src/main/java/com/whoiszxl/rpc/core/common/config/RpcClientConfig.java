@@ -25,6 +25,20 @@ public class RpcClientConfig {
      */
     private String routerStrategy;
 
+    /**
+     * 客户端序列化方式 jdk,kryo
+     */
+    private String clientSerialize;
+
+
+    public String getClientSerialize() {
+        return clientSerialize;
+    }
+
+    public void setClientSerialize(String clientSerialize) {
+        this.clientSerialize = clientSerialize;
+    }
+
     public String getApplicationName() {
         return applicationName;
     }

@@ -23,11 +23,9 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         //经过rpc编码器处理后，数据包直接是RpcProtocol的格式了
         RpcProtocol rpcProtocol = (RpcProtocol) msg;
-        String json = new String(rpcProtocol.getContent(), 0, rpcProtocol.getContentLength());
-        logger.info("接收到的数据包内容为:{}", json);
 
-        //从自定义协议中获取到需要调用的服务名与方法，从缓存中通过服务名拿到实例对象
-        RpcInvocation rpcInvocation = JSON.parseObject(json, RpcInvocation.class);
+        //从自定义协议中获取到需要调用的服务名与方法，通过自定义序列化方式进行反序列化，从缓存中通过服务名拿到实例对象
+        RpcInvocation rpcInvocation =RpcServerCache.SERVER_SERIALIZE_FACTORY.deserialize(rpcProtocol.getContent(), RpcInvocation.class);
         Object aimObject = RpcServerCache.PROVIDER_CLASS_MAP.get(rpcInvocation.getTargetServiceName());
         Method[] methods = aimObject.getClass().getDeclaredMethods();
 
@@ -45,7 +43,7 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
         }
 
         rpcInvocation.setResponse(result);
-        RpcProtocol responseRpcProtocol = new RpcProtocol(JSON.toJSONString(rpcInvocation).getBytes());
+        RpcProtocol responseRpcProtocol = new RpcProtocol(RpcServerCache.SERVER_SERIALIZE_FACTORY.serialize(rpcInvocation));
         ctx.writeAndFlush(responseRpcProtocol);
     }
 

@@ -16,6 +16,8 @@ import com.whoiszxl.rpc.core.registy.zk.AbstractRegister;
 import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
 import com.whoiszxl.rpc.core.router.RandomRouterImpl;
 import com.whoiszxl.rpc.core.router.RotateRouterImpl;
+import com.whoiszxl.rpc.core.serialize.jdk.JdkSerializeFactory;
+import com.whoiszxl.rpc.core.serialize.kryo.KryoSerializeFactory;
 import com.whoiszxl.rpc.service.LoginService;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -128,13 +130,12 @@ public class RpcClient {
         public void run() {
             while(true) {
                 try{
-
+                    //死循环获取队列中的发送请求，并通过自定义序列化方式序列化参数，包装到自定义协议中
                     RpcInvocation data = RpcClientCache.SEND_QUEUE.take();
-                    String json = JSON.toJSONString(data);
-                    RpcProtocol rpcProtocol = new RpcProtocol(json.getBytes());
+                    RpcProtocol rpcProtocol = new RpcProtocol(RpcClientCache.CLIENT_SERIALIZE_FACTORY.serialize(data));
 
+                    //获取到目标机器的netty连接，然后进行发送
                     ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(data.getTargetServiceName());
-
                     channelFuture.channel().writeAndFlush(rpcProtocol);
                 }catch (Exception e) {
                     e.printStackTrace();
@@ -173,6 +174,16 @@ public class RpcClient {
             RpcClientCache.IROUTER = new RotateRouterImpl();
         }else if("random".equals(routerStrategy)) {
             RpcClientCache.IROUTER = new RandomRouterImpl();
+        }
+
+        String clientSerialize = rpcClientConfig.getClientSerialize();
+        switch (clientSerialize) {
+            case "jdk":
+                RpcClientCache.CLIENT_SERIALIZE_FACTORY = new JdkSerializeFactory();
+                break;
+            default:
+                RpcClientCache.CLIENT_SERIALIZE_FACTORY = new KryoSerializeFactory();
+                break;
         }
     }
 

@@ -9,6 +9,8 @@ import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
 import com.whoiszxl.rpc.core.common.utils.IpUtils;
 import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
+import com.whoiszxl.rpc.core.serialize.jdk.JdkSerializeFactory;
+import com.whoiszxl.rpc.core.serialize.kryo.KryoSerializeFactory;
 import com.whoiszxl.rpc.core.service.impl.LoginServiceImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -132,8 +134,21 @@ public class RpcServer {
     }
 
     private void initServerConfig() {
+        //加载properties配置
         RpcServerConfig rpcServerConfig = PropertiesBootstrap.loadServerConfigFromLocal();
         this.setRpcServerConfig(rpcServerConfig);
+
+        //加载服务端序列化方式
+        String serverSerialize = rpcServerConfig.getServerSerialize();
+
+        switch (serverSerialize) {
+            case "jdk":
+                RpcServerCache.SERVER_SERIALIZE_FACTORY = new JdkSerializeFactory();
+                break;
+            default:
+                RpcServerCache.SERVER_SERIALIZE_FACTORY = new KryoSerializeFactory();
+                break;
+        }
     }
 
 
