@@ -26,6 +26,10 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
 
         //从自定义协议中获取到需要调用的服务名与方法，通过自定义序列化方式进行反序列化，从缓存中通过服务名拿到实例对象
         RpcInvocation rpcInvocation =RpcServerCache.SERVER_SERIALIZE_FACTORY.deserialize(rpcProtocol.getContent(), RpcInvocation.class);
+
+        //执行责任链
+        RpcServerCache.SERVER_FILTER_CHAIN.doFilter(rpcInvocation);
+
         Object aimObject = RpcServerCache.PROVIDER_CLASS_MAP.get(rpcInvocation.getTargetServiceName());
         Method[] methods = aimObject.getClass().getDeclaredMethods();
 

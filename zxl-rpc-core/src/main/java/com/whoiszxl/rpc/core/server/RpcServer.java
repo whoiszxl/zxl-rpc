@@ -7,6 +7,9 @@ import com.whoiszxl.rpc.core.common.event.RpcListenerLoader;
 import com.whoiszxl.rpc.core.common.pack.RpcDecoder;
 import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
 import com.whoiszxl.rpc.core.common.utils.IpUtils;
+import com.whoiszxl.rpc.core.filter.server.ServerFilterChain;
+import com.whoiszxl.rpc.core.filter.server.ServerLogFilterImpl;
+import com.whoiszxl.rpc.core.filter.server.ServerTokenFilterImpl;
 import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
 import com.whoiszxl.rpc.core.serialize.jdk.JdkSerializeFactory;
@@ -91,9 +94,9 @@ public class RpcServer {
      * 将我们自定义的服务注册到服务端里
      * 自定义服务必须实现接口，并且只能实现一个
      *
-     * @param serviceBean service bean.
      */
-    public void registerService(Object serviceBean) {
+    public void registerService(ServiceWrapper serviceWrapper) {
+        Object serviceBean = serviceWrapper.getServiceObj();
         Class<?>[] interfaces = serviceBean.getClass().getInterfaces();
 
         if(interfaces.length == 0) {
@@ -117,9 +120,13 @@ public class RpcServer {
         regURL.setApplicationName(rpcServerConfig.getApplicationName());
         regURL.addParameter("host", IpUtils.getIpAddress());
         regURL.addParameter("port", String.valueOf(rpcServerConfig.getServerPort()));
-
+        regURL.addParameter("group", String.valueOf(serviceWrapper.getGroup()));
+        regURL.addParameter("limit", String.valueOf(serviceWrapper.getLimit()));
         RpcServerCache.PROVIDER_URL_SET.add(regURL);
 
+        if(!"".equals(serviceWrapper.getToken())) {
+            RpcServerCache.PROVIDER_SERVICE_WRAPPER_MAP.put(myInterface.getName(), serviceWrapper);
+        }
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -129,7 +136,11 @@ public class RpcServer {
         rpcListenerLoader = new RpcListenerLoader();
         rpcListenerLoader.init();
 
-        rpcServer.registerService(new LoginServiceImpl());
+        ServiceWrapper serviceWrapper = new ServiceWrapper(new LoginServiceImpl(), "dev");
+        serviceWrapper.setToken("token-zxl");
+        serviceWrapper.setLimit(2);
+
+        rpcServer.registerService(serviceWrapper);
         rpcServer.startApp();
     }
 
@@ -149,6 +160,11 @@ public class RpcServer {
                 RpcServerCache.SERVER_SERIALIZE_FACTORY = new KryoSerializeFactory();
                 break;
         }
+
+        ServerFilterChain serverFilterChain = new ServerFilterChain();
+        serverFilterChain.addServerFilter(new ServerLogFilterImpl());
+        serverFilterChain.addServerFilter(new ServerTokenFilterImpl());
+        RpcServerCache.SERVER_FILTER_CHAIN = serverFilterChain;
     }
 
 

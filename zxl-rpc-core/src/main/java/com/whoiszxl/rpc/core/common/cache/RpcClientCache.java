@@ -1,8 +1,10 @@
 package com.whoiszxl.rpc.core.common.cache;
 
+import com.whoiszxl.rpc.core.common.config.RpcClientConfig;
 import com.whoiszxl.rpc.core.common.event.data.ChannelFuturePollingRef;
 import com.whoiszxl.rpc.core.common.event.data.ChannelFutureWrapper;
 import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
+import com.whoiszxl.rpc.core.filter.client.ClientFilterChain;
 import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.router.IRouter;
 import com.whoiszxl.rpc.core.serialize.SerializeFactory;
@@ -55,5 +57,10 @@ public class RpcClientCache {
     public static IRouter IROUTER;
 
     public static SerializeFactory CLIENT_SERIALIZE_FACTORY;
+
+
+    public static ClientFilterChain CLIENT_FILTER_CHAIN;
+
+    public static RpcClientConfig CLIENT_CONFIG;
 
 }

@@ -1,5 +1,7 @@
 package com.whoiszxl.rpc.core.proxy;
 
+import com.whoiszxl.rpc.core.client.RpcReferenceWrapper;
+
 /**
  * 代理工厂
  */
@@ -12,5 +14,5 @@ public interface ProxyFactory {
      * @return
      * @throws Throwable
      */
-    <T> T getProxy(final Class<T> clazz) throws Throwable;
+    <T> T getProxy(RpcReferenceWrapper rpcReferenceWrapper) throws Throwable;
 }

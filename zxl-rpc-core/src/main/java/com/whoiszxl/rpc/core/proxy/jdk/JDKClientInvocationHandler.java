@@ -1,5 +1,6 @@
 package com.whoiszxl.rpc.core.proxy.jdk;
 
+import com.whoiszxl.rpc.core.client.RpcReferenceWrapper;
 import com.whoiszxl.rpc.core.common.cache.RpcClientCache;
 import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
 
@@ -15,10 +16,10 @@ public class JDKClientInvocationHandler implements InvocationHandler {
 
     private final static Object OBJECT = new Object();
 
-    private Class<?> clazz;
+    private RpcReferenceWrapper rpcReferenceWrapper;
 
-    public JDKClientInvocationHandler(Class<?> clazz) {
-        this.clazz = clazz;
+    public JDKClientInvocationHandler(RpcReferenceWrapper rpcReferenceWrapper) {
+        this.rpcReferenceWrapper = rpcReferenceWrapper;
     }
 
     @Override
@@ -27,7 +28,8 @@ public class JDKClientInvocationHandler implements InvocationHandler {
         RpcInvocation rpcInvocation = new RpcInvocation();
         rpcInvocation.setArgs(args);
         rpcInvocation.setTargetMethod(method.getName());
-        rpcInvocation.setTargetServiceName(clazz.getName());
+        rpcInvocation.setTargetServiceName(rpcReferenceWrapper.getAimClass().getName());
+        rpcInvocation.setAttachments(rpcReferenceWrapper.getAttachments());
 
         //设置uuid，通过uuid将请求与返回进行匹配
         rpcInvocation.setUuid(UUID.randomUUID().toString());

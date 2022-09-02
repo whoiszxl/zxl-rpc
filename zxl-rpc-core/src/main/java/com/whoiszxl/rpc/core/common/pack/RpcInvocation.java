@@ -1,5 +1,8 @@
 package com.whoiszxl.rpc.core.common.pack;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * RPC调用需要使用到的参数封装
  */
@@ -30,6 +33,19 @@ public class RpcInvocation {
      */
     private Object response;
 
+    /**
+     * 附加信息
+     */
+    private Map<String, Object> attachments = new ConcurrentHashMap<>();
+
+
+    public Map<String, Object> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(Map<String, Object> attachments) {
+        this.attachments = attachments;
+    }
 
     public String getTargetMethod() {
         return targetMethod;

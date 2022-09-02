@@ -10,6 +10,10 @@ import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
 import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
 import com.whoiszxl.rpc.core.common.pack.RpcProtocol;
 import com.whoiszxl.rpc.core.common.utils.IpUtils;
+import com.whoiszxl.rpc.core.filter.client.ClientFilterChain;
+import com.whoiszxl.rpc.core.filter.client.ClientLogFilterImpl;
+import com.whoiszxl.rpc.core.filter.client.DirectInvokeFilterImpl;
+import com.whoiszxl.rpc.core.filter.client.GroupFilterImpl;
 import com.whoiszxl.rpc.core.proxy.jdk.JDKProxyFactory;
 import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.registy.zk.AbstractRegister;
@@ -67,6 +71,7 @@ public class RpcClient {
         rpcListenerLoader = new RpcListenerLoader();
         rpcListenerLoader.init();
         this.rpcClientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
+        RpcClientCache.CLIENT_CONFIG = this.rpcClientConfig;
 
         RpcReference rpcReference;
 
@@ -125,17 +130,16 @@ public class RpcClient {
 
 
     static class AsyncSendJob implements Runnable {
-
         @Override
         public void run() {
             while(true) {
                 try{
                     //死循环获取队列中的发送请求，并通过自定义序列化方式序列化参数，包装到自定义协议中
-                    RpcInvocation data = RpcClientCache.SEND_QUEUE.take();
-                    RpcProtocol rpcProtocol = new RpcProtocol(RpcClientCache.CLIENT_SERIALIZE_FACTORY.serialize(data));
+                    RpcInvocation rpcInvocation = RpcClientCache.SEND_QUEUE.take();
+                    RpcProtocol rpcProtocol = new RpcProtocol(RpcClientCache.CLIENT_SERIALIZE_FACTORY.serialize(rpcInvocation));
 
                     //获取到目标机器的netty连接，然后进行发送
-                    ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(data.getTargetServiceName());
+                    ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(rpcInvocation);
                     channelFuture.channel().writeAndFlush(rpcProtocol);
                 }catch (Exception e) {
                     e.printStackTrace();
@@ -145,6 +149,7 @@ public class RpcClient {
     }
 
 
+
     public static void main(String[] args) throws Throwable {
         RpcClient rpcClient = new RpcClient();
         RpcReference rpcReference = rpcClient.initClient();
@@ -152,8 +157,14 @@ public class RpcClient {
         //初始化客户端配置
         rpcClient.initClientConfig();
 
+        RpcReferenceWrapper<LoginService> rpcReferenceWrapper = new RpcReferenceWrapper<>();
+        rpcReferenceWrapper.setAimClass(LoginService.class);
+        rpcReferenceWrapper.setGroup("dev");
+        rpcReferenceWrapper.setServiceToken("token-zxl");
+
+
         //通过代理的方式获取到服务,在代理中将请求封装到队列里，然后将结果重新返回到队列中，通过超时的判断将结果返回
-        LoginService loginService = rpcReference.get(LoginService.class);
+        LoginService loginService = rpcReference.get(rpcReferenceWrapper);
         rpcClient.doSubscribeService(LoginService.class);
 
         ConnectionHandler.setBootstrap(rpcClient.getBootstrap());
@@ -185,6 +196,12 @@ public class RpcClient {
                 RpcClientCache.CLIENT_SERIALIZE_FACTORY = new KryoSerializeFactory();
                 break;
         }
+
+        ClientFilterChain clientFilterChain = new ClientFilterChain();
+        clientFilterChain.addClientFilter(new DirectInvokeFilterImpl());
+        //clientFilterChain.addClientFilter(new GroupFilterImpl());
+        clientFilterChain.addClientFilter(new ClientLogFilterImpl());
+        RpcClientCache.CLIENT_FILTER_CHAIN = clientFilterChain;
     }
 
 

@@ -2,6 +2,7 @@ package com.whoiszxl.rpc.core.client;
 
 import com.whoiszxl.rpc.core.common.cache.RpcClientCache;
 import com.whoiszxl.rpc.core.common.event.data.ChannelFutureWrapper;
+import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
 import com.whoiszxl.rpc.core.router.Selector;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -69,14 +70,19 @@ public class ConnectionHandler {
      * @param providerServiceName
      * @return
      */
-    public static ChannelFuture getChannelFuture(String providerServiceName) {
-        List<ChannelFutureWrapper> channelFutureWrappers = RpcClientCache.CONNECT_MAP.get(providerServiceName);
-        if (channelFutureWrappers == null || channelFutureWrappers.isEmpty()) {
+    public static ChannelFuture getChannelFuture(RpcInvocation rpcInvocation) {
+        String providerServiceName = rpcInvocation.getTargetServiceName();
+        ChannelFutureWrapper[] channelFutureWrappers = RpcClientCache.SERVICE_ROUTER_MAP.get(providerServiceName);
+        if (channelFutureWrappers == null || channelFutureWrappers.length == 0) {
             throw new RuntimeException("no provider exist for " + providerServiceName);
         }
 
+        RpcClientCache.CLIENT_FILTER_CHAIN.doFilter(Arrays.asList(channelFutureWrappers), rpcInvocation);
+
         Selector selector = new Selector();
         selector.setProviderServiceName(providerServiceName);
+        selector.setChannelFutureWrappers(channelFutureWrappers);
+
         return RpcClientCache.IROUTER.select(selector).getChannelFuture();
     }
 
