@@ -7,6 +7,8 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 
 import java.util.List;
 
+import static com.whoiszxl.rpc.core.common.constants.RpcConstants.MAGIC_NUMBER;
+
 /**
  * rpc解码器
  *
@@ -27,39 +29,22 @@ public class RpcDecoder extends ByteToMessageDecoder {
     public static final int MAX_LENGTH = 1000;
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        if(in.readableBytes() >= BASE_LENGTH) {
-
-            if(in.readableBytes() > MAX_LENGTH) {
-                in.skipBytes(in.readableBytes());
-            }
-
-            int beginReader;
-            while(true) {
-                beginReader = in.readerIndex();
-                in.markReaderIndex();
-
-                if(in.readShort() == RpcConstants.MAGIC_NUMBER) {
-                    break;
-                }else {
-                    ctx.close();
-                    return;
-                }
-            }
-
-            //如果读取到的包长度小于包定义的长度，则说明数据包不完整，需要重置索引
-            int contentLength = in.readInt();
-            if(in.readableBytes() < contentLength) {
-                in.readerIndex(beginReader);
+    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out)  {
+        if (byteBuf.readableBytes() >= BASE_LENGTH) {
+            if (!(byteBuf.readShort() == MAGIC_NUMBER)) {
+                ctx.close();
                 return;
             }
-
-            byte[] data = new byte[contentLength];
-            in.readBytes(data);
-            RpcProtocol rpcProtocol = new RpcProtocol(data);
+            int length = byteBuf.readInt();
+            if (byteBuf.readableBytes() < length) {
+                //数据包有异常
+                ctx.close();
+                return;
+            }
+            byte[] body = new byte[length];
+            byteBuf.readBytes(body);
+            RpcProtocol rpcProtocol = new RpcProtocol(body);
             out.add(rpcProtocol);
-
         }
-
     }
 }

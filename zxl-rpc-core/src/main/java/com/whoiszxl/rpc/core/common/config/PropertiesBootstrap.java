@@ -16,6 +16,8 @@ public class PropertiesBootstrap {
     public static final String SERVER_SERIALIZE_TYPE = "zxl-rpc.serverSerialize";
     public static final String CLIENT_SERIALIZE_TYPE = "zxl-rpc.clientSerialize";
 
+    public static final String SERVER_BIZ_THREAD_NUMS = "zxl-rpc.ServerBizThreadNums";
+    public static final String SERVER_QUEUE_SIZE = "zxl-rpc.ServerQueueSize";
 
 
     public static RpcServerConfig loadServerConfigFromLocal() {
@@ -30,6 +32,8 @@ public class PropertiesBootstrap {
         serverConfig.setRegisterAddr(PropertiesLoader.getPropertiesStr(REGISTER_ADDRESS));
         serverConfig.setRegisterType(PropertiesLoader.getPropertiesStr(REGISTER_TYPE));
         serverConfig.setServerSerialize(PropertiesLoader.getPropertiesStr(SERVER_SERIALIZE_TYPE));
+        serverConfig.setServerBizThreadNums(PropertiesLoader.getPropertiesInteger(SERVER_BIZ_THREAD_NUMS));
+        serverConfig.setServerQueueSize(PropertiesLoader.getPropertiesInteger(SERVER_QUEUE_SIZE));
         return serverConfig;
     }
 

@@ -44,7 +44,7 @@ public class RpcServer {
      */
     public void startApp() throws InterruptedException {
         bossGroup = new NioEventLoopGroup();
-        workerGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup(3);
 
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(bossGroup, workerGroup);
@@ -66,6 +66,8 @@ public class RpcServer {
         });
 
         this.batchExportUrl();
+
+        RpcServerCache.SERVER_CHANNEL_DISPATCHER.startDataConsume();
 
         serverBootstrap.bind(RpcServerCache.SERVER_CONFIG.getServerPort()).sync();
 
@@ -153,6 +155,8 @@ public class RpcServer {
         //加载properties配置
         RpcServerConfig rpcServerConfig = PropertiesBootstrap.loadServerConfigFromLocal();
         RpcServerCache.SERVER_CONFIG = rpcServerConfig;
+
+        RpcServerCache.SERVER_CHANNEL_DISPATCHER.init(rpcServerConfig.getServerQueueSize(), rpcServerConfig.getServerBizThreadNums());
 
         //加载服务端序列化方式
         String serverSerialize = rpcServerConfig.getServerSerialize();

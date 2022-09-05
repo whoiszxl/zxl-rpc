@@ -18,6 +18,8 @@ public class JDKClientInvocationHandler implements InvocationHandler {
 
     private RpcReferenceWrapper rpcReferenceWrapper;
 
+    private int timeout = 3000;
+
     public JDKClientInvocationHandler(RpcReferenceWrapper rpcReferenceWrapper) {
         this.rpcReferenceWrapper = rpcReferenceWrapper;
     }
@@ -30,17 +32,20 @@ public class JDKClientInvocationHandler implements InvocationHandler {
         rpcInvocation.setTargetMethod(method.getName());
         rpcInvocation.setTargetServiceName(rpcReferenceWrapper.getAimClass().getName());
         rpcInvocation.setAttachments(rpcReferenceWrapper.getAttachments());
-
         //设置uuid，通过uuid将请求与返回进行匹配
         rpcInvocation.setUuid(UUID.randomUUID().toString());
-        RpcClientCache.RESPONSE_CACHES.put(rpcInvocation.getUuid(), OBJECT);
-
         //将请求包封装到队列里，发送线程会消费这个队列进行发送
         RpcClientCache.SEND_QUEUE.add(rpcInvocation);
 
+        //如果是异步请求，就不需要判断结果了
+        if(rpcReferenceWrapper.isAsync()) {
+            return null;
+        }
+
+        RpcClientCache.RESPONSE_CACHES.put(rpcInvocation.getUuid(), OBJECT);
         //死循环在结果缓存里获取，拿到结果直接返回，3秒超时
         long startTime = System.currentTimeMillis();
-        while(System.currentTimeMillis() - startTime < 3000) {
+        while(System.currentTimeMillis() - startTime < timeout) {
             Object object = RpcClientCache.RESPONSE_CACHES.get(rpcInvocation.getUuid());
             if(object instanceof RpcInvocation) {
                 return ((RpcInvocation) object).getResponse();

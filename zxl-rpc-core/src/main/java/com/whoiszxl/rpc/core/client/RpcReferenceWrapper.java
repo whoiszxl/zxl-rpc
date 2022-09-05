@@ -18,7 +18,11 @@ public class RpcReferenceWrapper<T> {
     }
 
     public boolean isAsync(){
-        return Boolean.parseBoolean(String.valueOf(attachments.get("async")));
+        Object r = attachments.get("async");
+        if (r == null || r.equals(false)) {
+            return false;
+        }
+        return Boolean.valueOf(true);
     }
 
     public void setAsync(boolean async){
@@ -57,4 +61,13 @@ public class RpcReferenceWrapper<T> {
     public void setAttachments(Map<String, Object> attachments) {
         this.attachments = attachments;
     }
+
+    public void setTimeOut(int timeOut) {
+        attachments.put("timeOut", timeOut);
+    }
+
+    public String getTimeOUt() {
+        return String.valueOf(attachments.get("timeOut"));
+    }
+
 }

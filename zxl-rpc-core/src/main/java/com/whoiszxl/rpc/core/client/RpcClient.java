@@ -162,7 +162,7 @@ public class RpcClient {
         rpcReferenceWrapper.setAimClass(LoginService.class);
         rpcReferenceWrapper.setGroup("dev");
         rpcReferenceWrapper.setServiceToken("token-zxl");
-
+        rpcReferenceWrapper.setAsync(false);
 
         //通过代理的方式获取到服务,在代理中将请求封装到队列里，然后将结果重新返回到队列中，通过超时的判断将结果返回
         LoginService loginService = rpcReference.get(rpcReferenceWrapper);

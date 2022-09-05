@@ -18,6 +18,16 @@ public class RpcServerConfig {
      */
     private String serverSerialize;
 
+    /**
+     * 服务端处理请求的线程数
+     */
+    private Integer serverBizThreadNums;
+
+    /**
+     * 服务端接收客户端请求的队列的大小
+     */
+    private Integer serverQueueSize;
+
     public String getServerSerialize() {
         return serverSerialize;
     }
@@ -56,5 +66,21 @@ public class RpcServerConfig {
 
     public void setRegisterType(String registerType) {
         this.registerType = registerType;
+    }
+
+    public Integer getServerBizThreadNums() {
+        return serverBizThreadNums;
+    }
+
+    public void setServerBizThreadNums(Integer serverBizThreadNums) {
+        this.serverBizThreadNums = serverBizThreadNums;
+    }
+
+    public Integer getServerQueueSize() {
+        return serverQueueSize;
+    }
+
+    public void setServerQueueSize(Integer serverQueueSize) {
+        this.serverQueueSize = serverQueueSize;
     }
 }

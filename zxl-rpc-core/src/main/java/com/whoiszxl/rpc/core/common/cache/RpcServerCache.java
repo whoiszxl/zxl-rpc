@@ -1,6 +1,7 @@
 package com.whoiszxl.rpc.core.common.cache;
 
 import com.whoiszxl.rpc.core.common.config.RpcServerConfig;
+import com.whoiszxl.rpc.core.dispatcher.ServerChannelDispatcher;
 import com.whoiszxl.rpc.core.filter.server.ServerFilterChain;
 import com.whoiszxl.rpc.core.registy.RegURL;
 import com.whoiszxl.rpc.core.registy.RegistryService;
@@ -33,4 +34,5 @@ public class RpcServerCache {
     public static final Map<String, ServiceWrapper> PROVIDER_SERVICE_WRAPPER_MAP = new ConcurrentHashMap<>();
 
 
+    public static ServerChannelDispatcher SERVER_CHANNEL_DISPATCHER = new ServerChannelDispatcher();
 }

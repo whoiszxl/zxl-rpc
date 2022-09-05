@@ -25,6 +25,16 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter {
         byte[] content = rpcProtocol.getContent();
         RpcInvocation rpcInvocation = RpcClientCache.CLIENT_SERIALIZE_FACTORY.deserialize(content, RpcInvocation.class);
 
+        if(rpcInvocation.getE() != null) {
+            rpcInvocation.getE().printStackTrace();
+        }
+
+        Object r = rpcInvocation.getAttachments().get("async");
+        if(r != null && Boolean.parseBoolean(String.valueOf(r))) {
+            ReferenceCountUtil.release(msg);
+            return;
+        }
+
         //如果uuid与发送时的不一致，表明response是不合法的
         if(!RpcClientCache.RESPONSE_CACHES.containsKey(rpcInvocation.getUuid())) {
             throw new IllegalArgumentException("返回参数不合法");

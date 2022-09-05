@@ -34,6 +34,11 @@ public class RpcInvocation {
     private Object response;
 
     /**
+     * 记录服务端抛出的异常
+     */
+    private Throwable e;
+
+    /**
      * 附加信息
      */
     private Map<String, Object> attachments = new ConcurrentHashMap<>();
@@ -85,5 +90,13 @@ public class RpcInvocation {
 
     public void setResponse(Object response) {
         this.response = response;
+    }
+
+    public Throwable getE() {
+        return e;
+    }
+
+    public void setE(Throwable e) {
+        this.e = e;
     }
 }

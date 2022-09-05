@@ -23,7 +23,7 @@ public class RpcClientCache {
     /**
      * 客户端请求发送队列，单独线程进行消费处理
      */
-    public static BlockingQueue<RpcInvocation> SEND_QUEUE = new ArrayBlockingQueue<RpcInvocation>(128);
+    public static BlockingQueue<RpcInvocation> SEND_QUEUE = new ArrayBlockingQueue<RpcInvocation>(4096);
 
     /**
      * 服务端返回的响应实体信息
