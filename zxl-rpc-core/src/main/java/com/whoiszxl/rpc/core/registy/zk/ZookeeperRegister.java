@@ -1,6 +1,8 @@
 package com.whoiszxl.rpc.core.registy.zk;
 
 import com.alibaba.fastjson.JSON;
+import com.whoiszxl.rpc.core.common.cache.RpcClientCache;
+import com.whoiszxl.rpc.core.common.cache.RpcServerCache;
 import com.whoiszxl.rpc.core.common.event.RpcEvent;
 import com.whoiszxl.rpc.core.common.event.RpcListenerLoader;
 import com.whoiszxl.rpc.core.common.event.RpcNodeChangeEvent;
@@ -27,6 +29,11 @@ public class ZookeeperRegister extends AbstractRegister implements RegistryServi
 
     private String getConsumerPath(RegURL url) {
         return ROOT + "/" + url.getServiceName() + "/consumer/" + url.getApplicationName() + ":" + url.getParameters().get("host")+":";
+    }
+
+    public ZookeeperRegister() {
+        String registryAddr = RpcClientCache.CLIENT_CONFIG != null ? RpcClientCache.CLIENT_CONFIG.getRegisterAddr() : RpcServerCache.SERVER_CONFIG.getRegisterAddr();
+        this.zkClient = new CuratorZookeeperClient(registryAddr);
     }
 
     public ZookeeperRegister(String address) {

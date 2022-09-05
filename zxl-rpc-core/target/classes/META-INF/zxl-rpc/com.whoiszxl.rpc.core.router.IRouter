@@ -1,0 +1,2 @@
+random=com.whoiszxl.rpc.core.router.RandomRouterImpl
+rotate=com.whoiszxl.rpc.core.router.RotateRouterImpl

@@ -16,6 +16,11 @@ public class RpcClientConfig {
     private String registerAddr;
 
     /**
+     * 注册中心类型
+     */
+    private String registerType;
+
+    /**
      * 代理类型：jdk javassist
      */
     private String proxyType;
@@ -69,5 +74,13 @@ public class RpcClientConfig {
 
     public void setRouterStrategy(String routerStrategy) {
         this.routerStrategy = routerStrategy;
+    }
+
+    public String getRegisterType() {
+        return registerType;
+    }
+
+    public void setRegisterType(String registerType) {
+        this.registerType = registerType;
     }
 }

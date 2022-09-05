@@ -6,10 +6,10 @@ import com.whoiszxl.rpc.core.common.event.data.ChannelFutureWrapper;
 import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
 import com.whoiszxl.rpc.core.filter.client.ClientFilterChain;
 import com.whoiszxl.rpc.core.registy.RegURL;
+import com.whoiszxl.rpc.core.registy.zk.AbstractRegister;
 import com.whoiszxl.rpc.core.router.IRouter;
 import com.whoiszxl.rpc.core.serialize.SerializeFactory;
 
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -63,4 +63,5 @@ public class RpcClientCache {
 
     public static RpcClientConfig CLIENT_CONFIG;
 
+    public static AbstractRegister ABSTRACT_REGISTER;
 }

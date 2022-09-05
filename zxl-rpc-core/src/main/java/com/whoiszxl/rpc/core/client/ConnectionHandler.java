@@ -7,7 +7,9 @@ import com.whoiszxl.rpc.core.router.Selector;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ConnectionHandler {
 
@@ -67,8 +69,8 @@ public class ConnectionHandler {
 
     /**
      * 获取netty的channel连接
-     * @param providerServiceName
-     * @return
+     * @param rpcInvocation rpc调用信息
+     * @return netty连接通道
      */
     public static ChannelFuture getChannelFuture(RpcInvocation rpcInvocation) {
         String providerServiceName = rpcInvocation.getTargetServiceName();

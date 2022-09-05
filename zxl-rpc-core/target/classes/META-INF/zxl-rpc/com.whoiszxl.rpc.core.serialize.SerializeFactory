@@ -1,0 +1,2 @@
+jdk=com.whoiszxl.rpc.core.serialize.jdk.JdkSerializeFactory
+kryo=com.whoiszxl.rpc.core.serialize.kryo.KryoSerializeFactory

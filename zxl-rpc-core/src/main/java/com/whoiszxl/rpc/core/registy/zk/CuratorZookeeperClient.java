@@ -1,20 +1,16 @@
 package com.whoiszxl.rpc.core.registy.zk;
 
-import com.whoiszxl.rpc.core.registy.RegURL;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.apache.zookeeper.Watcher.Event.EventType.NodeDeleted;
 
 public class CuratorZookeeperClient extends AbstractZookeeperClient {
 

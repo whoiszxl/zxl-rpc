@@ -1,7 +1,6 @@
 package com.whoiszxl.rpc.core.common.event.listener;
 
 import com.whoiszxl.rpc.core.client.ConnectionHandler;
-import com.whoiszxl.rpc.core.client.RpcClientHandler;
 import com.whoiszxl.rpc.core.common.cache.RpcClientCache;
 import com.whoiszxl.rpc.core.common.event.RpcListener;
 import com.whoiszxl.rpc.core.common.event.RpcUpdateEvent;

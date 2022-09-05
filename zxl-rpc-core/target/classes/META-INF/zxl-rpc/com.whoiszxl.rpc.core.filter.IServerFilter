@@ -1,0 +1,2 @@
+serverLog=com.whoiszxl.rpc.core.filter.server.ServerLogFilterImpl
+serverToken=com.whoiszxl.rpc.core.filter.server.ServerTokenFilterImpl

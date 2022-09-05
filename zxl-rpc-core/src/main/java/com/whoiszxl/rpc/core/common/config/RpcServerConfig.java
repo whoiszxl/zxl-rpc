@@ -9,6 +9,8 @@ public class RpcServerConfig {
 
     private String registerAddr;
 
+    private String registerType;
+
     private String applicationName;
 
     /**
@@ -46,5 +48,13 @@ public class RpcServerConfig {
 
     public void setApplicationName(String applicationName) {
         this.applicationName = applicationName;
+    }
+
+    public String getRegisterType() {
+        return registerType;
+    }
+
+    public void setRegisterType(String registerType) {
+        this.registerType = registerType;
     }
 }

@@ -1,0 +1,3 @@
+clientLog=com.whoiszxl.rpc.core.filter.client.ClientLogFilterImpl
+directInvoke=com.whoiszxl.rpc.core.filter.client.DirectInvokeFilterImpl
+#group=com.whoiszxl.rpc.core.filter.client.GroupFilterImpl

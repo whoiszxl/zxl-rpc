@@ -10,18 +10,15 @@ import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
 import com.whoiszxl.rpc.core.common.pack.RpcInvocation;
 import com.whoiszxl.rpc.core.common.pack.RpcProtocol;
 import com.whoiszxl.rpc.core.common.utils.IpUtils;
+import com.whoiszxl.rpc.core.filter.IClientFilter;
 import com.whoiszxl.rpc.core.filter.client.ClientFilterChain;
-import com.whoiszxl.rpc.core.filter.client.ClientLogFilterImpl;
-import com.whoiszxl.rpc.core.filter.client.DirectInvokeFilterImpl;
-import com.whoiszxl.rpc.core.filter.client.GroupFilterImpl;
-import com.whoiszxl.rpc.core.proxy.jdk.JDKProxyFactory;
+import com.whoiszxl.rpc.core.proxy.ProxyFactory;
 import com.whoiszxl.rpc.core.registy.RegURL;
+import com.whoiszxl.rpc.core.registy.RegistryService;
 import com.whoiszxl.rpc.core.registy.zk.AbstractRegister;
-import com.whoiszxl.rpc.core.registy.zk.ZookeeperRegister;
-import com.whoiszxl.rpc.core.router.RandomRouterImpl;
-import com.whoiszxl.rpc.core.router.RotateRouterImpl;
-import com.whoiszxl.rpc.core.serialize.jdk.JdkSerializeFactory;
-import com.whoiszxl.rpc.core.serialize.kryo.KryoSerializeFactory;
+import com.whoiszxl.rpc.core.router.IRouter;
+import com.whoiszxl.rpc.core.serialize.SerializeFactory;
+import com.whoiszxl.rpc.core.spi.ExtensionLoader;
 import com.whoiszxl.rpc.service.LoginService;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -33,6 +30,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,8 +43,6 @@ public class RpcClient {
 
     private RpcClientConfig rpcClientConfig;
 
-    private AbstractRegister abstractRegister;
-
     private RpcListenerLoader rpcListenerLoader;
 
     private Bootstrap bootstrap = new Bootstrap();
@@ -55,7 +52,7 @@ public class RpcClient {
      * 启动rpc客户端
      * @return
      */
-    public RpcReference initClient() throws InterruptedException {
+    public RpcReference initClient() throws InterruptedException, IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
         NioEventLoopGroup clientGroup = new NioEventLoopGroup();
         bootstrap.group(clientGroup);
         bootstrap.channel(NioSocketChannel.class);
@@ -73,31 +70,35 @@ public class RpcClient {
         this.rpcClientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
         RpcClientCache.CLIENT_CONFIG = this.rpcClientConfig;
 
+        //通过自定义spi的方式加载代理方式
         RpcReference rpcReference;
-
-        if("javassist".equals(rpcClientConfig.getProxyType())) {
-            //todo
-            rpcReference = new RpcReference(new JDKProxyFactory());
-        }else {
-            rpcReference = new RpcReference(new JDKProxyFactory());
-        }
-
+        ExtensionLoader.LOADER_INSTANCE.loadExtension(ProxyFactory.class);
+        LinkedHashMap<String, Class> proxyMap = ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE.get(ProxyFactory.class.getName());
+        Class proxyClass = proxyMap.get(rpcClientConfig.getProxyType());
+        rpcReference = new RpcReference((ProxyFactory) proxyClass.newInstance());
         return rpcReference;
     }
 
     public void doSubscribeService(Class<?> serviceBean) {
-        if (abstractRegister == null) {
-            abstractRegister = new ZookeeperRegister(rpcClientConfig.getRegisterAddr());
+        if (RpcClientCache.ABSTRACT_REGISTER == null) {
+            try{
+                ExtensionLoader.LOADER_INSTANCE.loadExtension(RegistryService.class);
+                LinkedHashMap<String, Class> registerMap = ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE.get(RegistryService.class.getName());
+                Class registerClass = registerMap.get(rpcClientConfig.getRegisterType());
+                RpcClientCache.ABSTRACT_REGISTER = (AbstractRegister) registerClass.newInstance();
+            }catch (Exception e) {
+                throw new RuntimeException("注册服务未知异常", e);
+            }
         }
         RegURL url = new RegURL();
         url.setApplicationName(rpcClientConfig.getApplicationName());
         url.setServiceName(serviceBean.getName());
         url.addParameter("host", IpUtils.getIpAddress());
 
-        Map<String, String> result = abstractRegister.getServiceWeightMap(serviceBean.getName());
+        Map<String, String> result = RpcClientCache.ABSTRACT_REGISTER.getServiceWeightMap(serviceBean.getName());
         RpcClientCache.URL_MAP.put(serviceBean.getName(), result);
 
-        abstractRegister.subscribe(url);
+        RpcClientCache.ABSTRACT_REGISTER.subscribe(url);
     }
 
 
@@ -105,7 +106,7 @@ public class RpcClient {
         //遍历所有的service服务
         for (RegURL providerUrl : RpcClientCache.SUBSCRIBE_SERVICE_LIST) {
             //从zk中拿到所有的服务提供者的ip:port
-            List<String> providerIps = abstractRegister.getProviderIps(providerUrl.getServiceName());
+            List<String> providerIps = RpcClientCache.ABSTRACT_REGISTER.getProviderIps(providerUrl.getServiceName());
             //遍历所有的ip:port，创建连接，并保存到CONNECT_MAP连接缓存中去
             for (String providerIp : providerIps) {
                 try {
@@ -118,7 +119,7 @@ public class RpcClient {
             RegURL url = new RegURL();
             url.addParameter("servicePath", providerUrl.getServiceName() + "/provider");
             url.addParameter("providerIps", JSON.toJSONString(providerIps));
-            abstractRegister.doAfterSubscribe(url);
+            RpcClientCache.ABSTRACT_REGISTER.doAfterSubscribe(url);
         }
     }
 
@@ -179,28 +180,42 @@ public class RpcClient {
 
     }
 
-    private void initClientConfig() {
-        String routerStrategy = rpcClientConfig.getRouterStrategy();
-        if("rotate".equals(routerStrategy)) {
-            RpcClientCache.IROUTER = new RotateRouterImpl();
-        }else if("random".equals(routerStrategy)) {
-            RpcClientCache.IROUTER = new RandomRouterImpl();
-        }
+    private void initClientConfig() throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+        //从自定义SPI加载路由实现类
+        ExtensionLoader.LOADER_INSTANCE.loadExtension(IRouter.class);
 
-        String clientSerialize = rpcClientConfig.getClientSerialize();
-        switch (clientSerialize) {
-            case "jdk":
-                RpcClientCache.CLIENT_SERIALIZE_FACTORY = new JdkSerializeFactory();
-                break;
-            default:
-                RpcClientCache.CLIENT_SERIALIZE_FACTORY = new KryoSerializeFactory();
-                break;
+        //取出对应配置的类并实例化为对象
+        String routerStrategy = rpcClientConfig.getRouterStrategy();
+        LinkedHashMap<String, Class> routerMap = ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE.get(IRouter.class.getName());
+        Class routerClass = routerMap.get(routerStrategy);
+        if(routerClass == null) {
+            throw new RuntimeException("路由配置不合法");
         }
+        RpcClientCache.IROUTER = (IRouter) routerClass.newInstance();
+
+        //从自定义SPI加载序列化实现
+        ExtensionLoader.LOADER_INSTANCE.loadExtension(SerializeFactory.class);
+        String clientSerialize = rpcClientConfig.getClientSerialize();
+        LinkedHashMap<String, Class> serializeMap = ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE.get(SerializeFactory.class.getName());
+        Class serializeClass = serializeMap.get(clientSerialize);
+        if(serializeClass == null) {
+            throw new RuntimeException("序列化配置不合法");
+        }
+        RpcClientCache.CLIENT_SERIALIZE_FACTORY = (SerializeFactory) serializeClass.newInstance();
+
+        //从自定义SPI加载过滤链
+        ExtensionLoader.LOADER_INSTANCE.loadExtension(IClientFilter.class);
+        LinkedHashMap<String, Class> filterChainMap = ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE.get(IClientFilter.class.getName());
 
         ClientFilterChain clientFilterChain = new ClientFilterChain();
-        clientFilterChain.addClientFilter(new DirectInvokeFilterImpl());
-        //clientFilterChain.addClientFilter(new GroupFilterImpl());
-        clientFilterChain.addClientFilter(new ClientLogFilterImpl());
+        for (String key : filterChainMap.keySet()) {
+            Class aClass = filterChainMap.get(key);
+            if(aClass == null) {
+                throw new RuntimeException("过滤调用链配置不合法");
+            }
+            clientFilterChain.addClientFilter((IClientFilter) aClass.newInstance());
+        }
+
         RpcClientCache.CLIENT_FILTER_CHAIN = clientFilterChain;
     }
 
