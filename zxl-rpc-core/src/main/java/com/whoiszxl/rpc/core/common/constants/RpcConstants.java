@@ -7,4 +7,5 @@ public interface RpcConstants {
 
     short MAGIC_NUMBER = 1994;
 
+    String DEFAULT_DECODE_CHAR = "$#!_666_!#$";
 }

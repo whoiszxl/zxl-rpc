@@ -3,6 +3,7 @@ package com.whoiszxl.rpc.core.server;
 import com.whoiszxl.rpc.core.common.cache.RpcServerCache;
 import com.whoiszxl.rpc.core.common.config.PropertiesBootstrap;
 import com.whoiszxl.rpc.core.common.config.RpcServerConfig;
+import com.whoiszxl.rpc.core.common.constants.RpcConstants;
 import com.whoiszxl.rpc.core.common.event.RpcListenerLoader;
 import com.whoiszxl.rpc.core.common.pack.RpcDecoder;
 import com.whoiszxl.rpc.core.common.pack.RpcEncoder;
@@ -15,12 +16,15 @@ import com.whoiszxl.rpc.core.serialize.SerializeFactory;
 import com.whoiszxl.rpc.core.service.impl.LoginServiceImpl;
 import com.whoiszxl.rpc.core.spi.ExtensionLoader;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -59,6 +63,8 @@ public class RpcServer {
             @Override
             protected void initChannel(SocketChannel socketChannel) throws Exception {
                 System.out.println("init rpc server.");
+                ByteBuf delimiter = Unpooled.copiedBuffer(RpcConstants.DEFAULT_DECODE_CHAR.getBytes());
+                socketChannel.pipeline().addLast(new DelimiterBasedFrameDecoder(4096, delimiter));
                 socketChannel.pipeline().addLast(new RpcEncoder());
                 socketChannel.pipeline().addLast(new RpcDecoder());
                 socketChannel.pipeline().addLast(new RpcServerHandler());
